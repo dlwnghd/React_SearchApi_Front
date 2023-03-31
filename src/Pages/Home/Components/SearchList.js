@@ -1,10 +1,12 @@
 import SearchApi from 'Apis/searchApi'
 import { useEffect } from 'react'
+import styled from 'styled-components'
 
 const maxSearchList = 5
 
 function SearchList({
 	searchInput,
+	setSearchInput,
 	searchList,
 	setSearchList,
 	chooseInput,
@@ -23,21 +25,27 @@ function SearchList({
 
 	// searchInput값이 바뀔 때마다 안에 정의 실행
 	useEffect(() => {
-		if (searchInput === '') {
-			setSearchList([]) // 현재는 입력창에 검색한 것이 없다면 빈칸을 돌려주는 형태
-			return
+		const handler = setTimeout(() => {
+			if (searchInput === '') {
+				setSearchList([])
+				return
+			}
+			getData(`${searchInput}`)
+				.then(data => {
+					if (typeof data !== 'string' && data.length > maxSearchList) {
+						return setSearchList(data.slice(0, maxSearchList))
+					}
+					setSearchList(data)
+				})
+				.catch(error => {
+					console.log(error)
+				})
+		}, 500)
+
+		return () => {
+			clearTimeout(handler)
 		}
-		getData(`${searchInput}`)
-			.then(data => {
-				if (typeof data !== 'string' && data.length > maxSearchList) {
-					return setSearchList(data.slice(0, maxSearchList))
-				}
-				setSearchList(data)
-			})
-			.catch(error => {
-				console.log(error)
-			})
-	}, [searchInput, chooseInput])
+	}, [searchInput])
 
 	if (searchList == '검색 결과가 없습니다.') {
 		return (
@@ -47,7 +55,7 @@ function SearchList({
 		)
 	}
 	return (
-		<>
+		<div>
 			{searchInput == '' ? (
 				<>
 					<div>
@@ -56,13 +64,13 @@ function SearchList({
 					{recentSearchArray ? (
 						<>
 							{recentSearchArray.map((item, index) => (
-								<div key={item}>
+								<ResultBox key={item}>
 									{index === chooseInput ? (
 										<h3 style={{ backgroundColor: 'pink' }}>{item}</h3>
 									) : (
 										<p>{item}</p>
 									)}
-								</div>
+								</ResultBox>
 							))}
 						</>
 					) : (
@@ -104,7 +112,14 @@ function SearchList({
 					))}
 				</>
 			)}
-		</>
+		</div>
 	)
 }
 export default SearchList
+
+const ResultBox = styled.div`
+	:hover {
+		cursor: pointer;
+		background-color: pink;
+	}
+`

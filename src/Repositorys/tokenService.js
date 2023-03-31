@@ -5,7 +5,7 @@ const TOKEN_KEY = 'search_token'
  */
 const TokenService = {
 	/**
-	 * set (token 생성)
+	 * setToken (token 생성)
 	 * @ 백엔드에서 토큰을 만들어달라고 요청하기
 	 */
 	async setToken(searchToken) {
@@ -18,7 +18,6 @@ const TokenService = {
 		if (tokens.length > 5) {
 			tokens.pop()
 		}
-		console.log('여기왔어!!!!')
 		localStorage.setItem(TOKEN_KEY, JSON.stringify(tokens))
 	},
 

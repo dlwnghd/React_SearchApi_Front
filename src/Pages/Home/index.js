@@ -1,6 +1,6 @@
 import SearchApi from 'Apis/searchApi'
 import { useAuth } from 'Contexts/auth'
-import useInput from 'Hooks/useInput'
+import { useEffect } from 'react'
 import { useState } from 'react'
 import TokenService from 'Repositorys/tokenService'
 import styled from 'styled-components'
@@ -9,48 +9,72 @@ import SearchResultList from './Components/SearchResultList'
 
 function HomePage() {
 	const auth = useAuth()
+
 	const recentSearchArray = TokenService.getSearchTokens() // 토큰을 이용한 최근검색어 관리
 
+	const [searchInput, setSearchInput] = useState('') // 검색창에 있는 value 관리
 	const [searchList, setSearchList] = useState([]) // 검색해서 나온 list관리
+
 	const [searchResultList, setSearchResultList] = useState([]) // 검색해서 나온 list관리
-	const [searchInput, setSearchInput] = useInput('') // 검색창에 있는 value 관리
+
 	const [chooseInput, setChooseInput] = useState(-1) // 검색창에서 하이라이트의 대상이 될 인덱스번호를 기억할 state
+	const [focusText, setFocusText] = useState('') // Focus된 텍스트
+
+	// 디바운스 적용
+	useEffect(() => {
+		const handler = setTimeout(() => {
+			// 입력창 값이 변경될 때마다 지연 시간 후에 setSearchInput 함수를 실행
+			console.log(searchInput)
+		}, 300)
+
+		// 이전 타이머를 제거하여 중복 실행되지 않도록 함
+		return () => {
+			clearTimeout(handler)
+		}
+	}, [searchInput])
 
 	// 키 입력
 	const handleKeyPress = e => {
 		// Enter 키 입력
 		if (e.key === 'Enter') {
 			onSubmitSearch()
-		} else if (e.key === 'ArrowUp') {
-			// ⬆️키 입력
+			setChooseInput(-1)
+		}
+
+		// Backspace 키 입력
+		if (e.key === 'Backspace') {
+			setChooseInput(-1)
+		}
+
+		// ⬆️키 입력
+		if (e.key === 'ArrowUp') {
 			console.log('키보드 ⬆️ 입력됨!')
 
 			if (chooseInput < 0) {
 				return
 			}
 			setChooseInput(prev => prev - 1)
-		} else if (e.key === 'ArrowDown') {
-			// ⬇️키 입력
+		}
+
+		// ⬇️키 입력
+		if (e.key === 'ArrowDown') {
 			console.log('키보드 ⬇️ 입력됨!')
 
 			// 검색중인 경우
 			if (searchList.length) {
 				if (chooseInput > searchList.length - 2) {
-					return setChooseInput(0)
+					setChooseInput(0)
+				} else {
+					setChooseInput(prev => prev + 1)
 				}
-				console.log(chooseInput)
-				setChooseInput(prev => prev + 1)
 			} else {
 				// 검색창이 빈 경우
 				if (chooseInput > recentSearchArray.length - 2) {
-					return setChooseInput(0)
+					setChooseInput(0)
+				} else {
+					setChooseInput(prev => prev + 1)
 				}
-				console.log(chooseInput)
-				setChooseInput(prev => prev + 1)
 			}
-		} else {
-			console.log(e.key)
-			return setChooseInput(-1)
 		}
 	}
 
@@ -65,13 +89,20 @@ function HomePage() {
 		}
 	}
 
-	// 검색어로 검색
+	// 검색어 변경 핸들러
+	const handleSearchTermChange = e => {
+		const key = e.target.value
+		setSearchInput(key)
+	}
+
+	// 검색어로 데이터 가져오기
 	const onSubmitSearch = () => {
-		if (searchInput == '') {
+		if (focusText == '' && searchInput == '') {
 			alert('검색어를 입력해주세요')
 			return
 		}
-		getData(`${searchInput}`)
+
+		getData(`${focusText || searchInput}`)
 			.then(data => {
 				setSearchResultList(data)
 				setSearchList([])
@@ -79,22 +110,36 @@ function HomePage() {
 			.catch(error => {
 				console.log(error)
 			})
-		auth.search(searchInput)
+		auth.search(`${focusText || searchInput}`)
 	}
+
+	// 검색어 부분 하이라이트 텍스트로 변경
+	useEffect(() => {
+		if (searchInput == '') {
+			setFocusText(chooseInput >= 0 && recentSearchArray[chooseInput])
+			return
+		}
+		setFocusText(chooseInput >= 0 && searchList[chooseInput])
+	}, [chooseInput])
+
+	console.log('searchInput : ' + searchInput)
+	console.log('focusText : ' + focusText)
 
 	return (
 		<div className="App">
 			<Wrapper>
 				<InputArea
 					type="text"
-					placeholder="검색어 입력"
+					placeholder="검색어를 입력하세요"
 					name="searchInput"
-					onChange={setSearchInput}
+					value={focusText || searchInput}
+					onChange={handleSearchTermChange}
 					onKeyDown={handleKeyPress}
 					autoComplete="off"
 				/>
 				<SearchList
 					searchInput={searchInput}
+					setSearchInput={setSearchInput}
 					searchList={searchList}
 					setSearchList={setSearchList}
 					chooseInput={chooseInput}
