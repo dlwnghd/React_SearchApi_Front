@@ -28,7 +28,7 @@ function AuthProvider({ children }) {
 	 */
 	const search = token => {
 		if (searchToken) {
-			console.log(token)
+			// console.log(token)
 			return TokenService.setToken(token)
 		}
 		TokenService.setToken(token)

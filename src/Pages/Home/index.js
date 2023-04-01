@@ -20,6 +20,8 @@ function HomePage() {
 	const [chooseInput, setChooseInput] = useState(-1) // 검색창에서 하이라이트의 대상이 될 인덱스번호를 기억할 state
 	const [focusText, setFocusText] = useState('') // Focus된 텍스트
 
+	const [showSearchList, setShowSearchList] = useState(true) // 검색창 활성화 관리
+
 	// 디바운스 적용
 	useEffect(() => {
 		const handler = setTimeout(() => {
@@ -37,8 +39,20 @@ function HomePage() {
 	const handleKeyPress = e => {
 		// Enter 키 입력
 		if (e.key === 'Enter') {
+			// 검색중인 경우
+			chooseInput >= 0 &&
+				searchList.length &&
+				setSearchInput(searchList[chooseInput])
+
+			// 검색창이 빈 경우
+			chooseInput >= 0 &&
+				!searchList.length &&
+				setSearchInput(recentSearchArray[chooseInput])
+
 			onSubmitSearch()
 			setChooseInput(-1)
+			setShowSearchList(false)
+			return
 		}
 
 		// Backspace 키 입력
@@ -76,6 +90,7 @@ function HomePage() {
 				}
 			}
 		}
+		setShowSearchList(true)
 	}
 
 	// API에서 Promise형태의 데이터 받아오기
@@ -105,7 +120,7 @@ function HomePage() {
 		getData(`${focusText || searchInput}`)
 			.then(data => {
 				setSearchResultList(data)
-				setSearchList([])
+				setSearchList(data)
 			})
 			.catch(error => {
 				console.log(error)
@@ -122,8 +137,8 @@ function HomePage() {
 		setFocusText(chooseInput >= 0 && searchList[chooseInput])
 	}, [chooseInput])
 
-	console.log('searchInput : ' + searchInput)
-	console.log('focusText : ' + focusText)
+	// console.log('searchInput : ' + searchInput)
+	// console.log('focusText : ' + focusText)
 
 	return (
 		<div className="App">
@@ -144,6 +159,9 @@ function HomePage() {
 					setSearchList={setSearchList}
 					chooseInput={chooseInput}
 					recentSearchArray={recentSearchArray}
+					showSearchList={showSearchList}
+					setSearchResultList={setSearchResultList}
+					setShowSearchList={setShowSearchList}
 				/>
 				{searchResultList && (
 					<SearchResultList
@@ -167,5 +185,5 @@ const InputArea = styled.input`
 	width: 100%;
 	border: 1px solid black;
 	border-radius: 1rem;
-	padding-left: 1rem;
+	padding: 1rem;
 `

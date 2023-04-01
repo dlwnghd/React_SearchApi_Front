@@ -1,4 +1,5 @@
 import SearchApi from 'Apis/searchApi'
+import { useAuth } from 'Contexts/auth'
 import { useEffect } from 'react'
 import styled from 'styled-components'
 
@@ -11,7 +12,12 @@ function SearchList({
 	setSearchList,
 	chooseInput,
 	recentSearchArray,
+	showSearchList,
+	setSearchResultList,
+	setShowSearchList,
 }) {
+	const auth = useAuth()
+
 	// API에서 Promise형태의 데이터 받아오기
 	const getData = async params => {
 		try {
@@ -47,6 +53,22 @@ function SearchList({
 		}
 	}, [searchInput])
 
+	// 클릭으로 데이터 가져오기
+	function onClickSearch(value) {
+		console.log('클릭됨!')
+		getData(value)
+			.then(data => {
+				setSearchResultList(data)
+				setSearchList([])
+			})
+			.catch(error => {
+				console.log(error)
+			})
+		auth.search(value)
+		setSearchInput(value)
+		setShowSearchList(false)
+	}
+
 	if (searchList == '검색 결과가 없습니다.') {
 		return (
 			<>
@@ -54,6 +76,7 @@ function SearchList({
 			</>
 		)
 	}
+
 	return (
 		<div>
 			{searchInput == '' ? (
@@ -64,7 +87,7 @@ function SearchList({
 					{recentSearchArray ? (
 						<>
 							{recentSearchArray.map((item, index) => (
-								<ResultBox key={item}>
+								<ResultBox key={item} onClick={() => onClickSearch(item)}>
 									{index === chooseInput ? (
 										<h3 style={{ backgroundColor: 'pink' }}>{item}</h3>
 									) : (
@@ -81,35 +104,43 @@ function SearchList({
 				</>
 			) : (
 				<>
-					{searchList.map((item, index) => (
-						<div key={index}>
-							{index === chooseInput ? (
-								<h4 style={{ backgroundColor: 'pink' }}>
-									{item.includes(searchInput) ? (
-										<>
-											{item.split(searchInput)[0]}
-											<span style={{ color: '#ff0000' }}>{searchInput}</span>
-											{item.split(searchInput)[1]}
-										</>
+					{showSearchList && (
+						<>
+							{searchList.map((item, index) => (
+								<ResultBox key={index} onClick={() => onClickSearch(item)}>
+									{index === chooseInput ? (
+										<h4 style={{ backgroundColor: 'pink' }}>
+											{item.includes(searchInput) ? (
+												<>
+													{item.split(searchInput)[0]}
+													<span style={{ color: '#ff0000' }}>
+														{searchInput}
+													</span>
+													{item.split(searchInput)[1]}
+												</>
+											) : (
+												item
+											)}
+										</h4>
 									) : (
-										item
+										<p>
+											{item.includes(searchInput) ? (
+												<>
+													{item.split(searchInput)[0]}
+													<span style={{ color: '#ff0000' }}>
+														{searchInput}
+													</span>
+													{item.split(searchInput)[1]}
+												</>
+											) : (
+												item
+											)}
+										</p>
 									)}
-								</h4>
-							) : (
-								<p>
-									{item.includes(searchInput) ? (
-										<>
-											{item.split(searchInput)[0]}
-											<span style={{ color: '#ff0000' }}>{searchInput}</span>
-											{item.split(searchInput)[1]}
-										</>
-									) : (
-										item
-									)}
-								</p>
-							)}
-						</div>
-					))}
+								</ResultBox>
+							))}
+						</>
+					)}
 				</>
 			)}
 		</div>
