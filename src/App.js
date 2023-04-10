@@ -3,15 +3,15 @@ import GlobalStyles from './Styles/global'
 import theme from './Styles/theme'
 import { RouterProvider } from 'react-router-dom'
 import router from './Routes/routing'
-import AuthProvider from 'Contexts/auth'
+import SearchProvider from 'Contexts/searchContext'
 
 function App() {
 	return (
 		<ThemeProvider theme={theme}>
-			<AuthProvider>
+			<SearchProvider>
 				<GlobalStyles />
 				<RouterProvider router={router} />
-			</AuthProvider>
+			</SearchProvider>
 		</ThemeProvider>
 	)
 }

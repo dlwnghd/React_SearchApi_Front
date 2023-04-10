@@ -4,7 +4,7 @@ const FONT_SIZE = {
 	medium: '2.4rem',
 	large: '2.4rem',
 	big: '2.6rem',
-	huge: '4.8rem',
+	huge: '6.4rem',
 }
 
 const FONT_WEIGHT = {

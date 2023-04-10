@@ -26,14 +26,6 @@ const TokenService = {
 		const tokens = localStorage.getItem(TOKEN_KEY)
 		return tokens ? JSON.parse(tokens) : null
 	},
-	// get (token 가져오기)
-	getToken() {
-		return localStorage.getItem(TOKEN_KEY)
-	},
-	// remove (토큰 삭제)
-	removeToken() {
-		localStorage.removeItem(TOKEN_KEY)
-	},
 }
 
 export default TokenService

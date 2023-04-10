@@ -1,156 +1,112 @@
-import SearchApi from 'Apis/searchApi'
-import { useAuth } from 'Contexts/auth'
-import { useEffect } from 'react'
-import styled from 'styled-components'
+import { useSearch } from 'Contexts/searchContext'
+import styled, { css } from 'styled-components'
 
-const maxSearchList = 5
+function SearchList() {
+	const search = useSearch()
 
-function SearchList({
-	searchInput,
-	setSearchInput,
-	searchList,
-	setSearchList,
-	chooseInput,
-	recentSearchArray,
-	showSearchList,
-	setSearchResultList,
-	setShowSearchList,
-}) {
-	const auth = useAuth()
-
-	// API에서 Promise형태의 데이터 받아오기
-	const getData = async params => {
-		try {
-			const res = await SearchApi.getSearch(params)
-			return res.data
-		} catch (err) {
-			console.log(err.response.data)
-			return err.response.data
-		}
+	// searchList의 값이 '검색 결과가 없습니다.'일 때
+	if (search.searchList === '검색 결과가 없습니다.') {
+		return <p>{search.searchList}</p>
 	}
 
-	// searchInput값이 바뀔 때마다 안에 정의 실행
-	useEffect(() => {
-		const handler = setTimeout(() => {
-			if (searchInput === '') {
-				setSearchList([])
-				return
-			}
-			getData(`${searchInput}`)
-				.then(data => {
-					if (typeof data !== 'string' && data.length > maxSearchList) {
-						return setSearchList(data.slice(0, maxSearchList))
-					}
-					setSearchList(data)
-				})
-				.catch(error => {
-					console.log(error)
-				})
-		}, 500)
-
-		return () => {
-			clearTimeout(handler)
-		}
-	}, [searchInput])
-
-	// 클릭으로 데이터 가져오기
-	function onClickSearch(value) {
-		console.log('클릭됨!')
-		getData(value)
-			.then(data => {
-				setSearchResultList(data)
-				setSearchList([])
-			})
-			.catch(error => {
-				console.log(error)
-			})
-		auth.search(value)
-		setSearchInput(value)
-		setShowSearchList(false)
+	// showSearchList가 false일때
+	if (!search.showSearchList) {
+		return
 	}
 
-	if (searchList == '검색 결과가 없습니다.') {
+	// 최근 검색어 보이기
+	if (search.searchInput == '') {
 		return (
-			<>
-				<p>{searchList}</p>
-			</>
+				<ResultWrapper>
+					<div>
+						<h4>최근 검색어</h4>
+					</div>
+					<SplitLine />
+					{/* 최근검색어 토큰이 있다면*/}
+					{search.get() ? (
+						search.get().map((item, index) => (
+							<ResultBox
+								key={item}
+								onMouseDown={e => {
+									e.stopPropagation()
+									search.onSubmitSearch(item)
+								}}
+							>
+								{index === search.chooseInput ? (
+									<h3 style={{ backgroundColor: 'pink' }}>{item}</h3>
+								) : (
+									<p>{item}</p>
+								)}
+							</ResultBox>
+						))
+					) : (
+						// 최근 검색어 토큰이 없다면
+						<p>최근 검색어가 없습니다.</p>
+					)}
+				</ResultWrapper>
 		)
 	}
 
+	// 연관 검색어 보이기
 	return (
-		<div>
-			{searchInput == '' ? (
-				<>
-					<div>
-						<span>최근 검색어</span>
-					</div>
-					{recentSearchArray ? (
-						<>
-							{recentSearchArray.map((item, index) => (
-								<ResultBox key={item} onClick={() => onClickSearch(item)}>
-									{index === chooseInput ? (
-										<h3 style={{ backgroundColor: 'pink' }}>{item}</h3>
-									) : (
-										<p>{item}</p>
-									)}
-								</ResultBox>
-							))}
-						</>
+		<ResultWrapper>
+			{search.searchList.map((item, index) => (
+				<ResultBox
+					key={index}
+					isSelected={index === search.chooseInput}
+					onMouseDown={e => {
+						e.stopPropagation()
+						search.onSubmitSearch(item)
+					}}
+				>
+					{item.includes(search.searchInput) ? (
+						<p>
+							{item.split(search.searchInput)[0]}
+							<span style={{ color: '#ff0000' }}>{search.searchInput}</span>
+						</p>
 					) : (
-						<>
-							<p>최근 검색어가 없습니다.</p>
-						</>
+						<p>{item}</p>
 					)}
-				</>
-			) : (
-				<>
-					{showSearchList && (
-						<>
-							{searchList.map((item, index) => (
-								<ResultBox key={index} onClick={() => onClickSearch(item)}>
-									{index === chooseInput ? (
-										<h4 style={{ backgroundColor: 'pink' }}>
-											{item.includes(searchInput) ? (
-												<>
-													{item.split(searchInput)[0]}
-													<span style={{ color: '#ff0000' }}>
-														{searchInput}
-													</span>
-													{item.split(searchInput)[1]}
-												</>
-											) : (
-												item
-											)}
-										</h4>
-									) : (
-										<p>
-											{item.includes(searchInput) ? (
-												<>
-													{item.split(searchInput)[0]}
-													<span style={{ color: '#ff0000' }}>
-														{searchInput}
-													</span>
-													{item.split(searchInput)[1]}
-												</>
-											) : (
-												item
-											)}
-										</p>
-									)}
-								</ResultBox>
-							))}
-						</>
-					)}
-				</>
-			)}
-		</div>
+				</ResultBox>
+			))}
+		</ResultWrapper>
 	)
 }
 export default SearchList
 
+const ResultWrapper = styled.div`
+	padding: 5px 10px;
+	margin-top: 1rem;
+	border: 0.2rem solid gray;
+	border-radius: 0.5rem;
+	box-sizing: border-box;
+`
+
 const ResultBox = styled.div`
+	box-sizing: border-box;
 	:hover {
 		cursor: pointer;
-		background-color: pink;
+		background-color: var(--color--ultralight-gray);
+		font-weight: bold;
+		box-sizing: border-box;
 	}
+
+	& > h3,
+	& > p {
+		font-size: ${({ theme }) => theme.FONT_SIZE.small};
+	}
+
+	& p span {
+		font-size: ${({ theme }) => theme.FONT_SIZE.small};
+	}
+
+	${({ isSelected }) =>
+		isSelected &&
+		css`
+			background-color: pink;
+		`}
+`
+
+const SplitLine = styled.hr`
+	margin: 0.5rem 0;
 `
