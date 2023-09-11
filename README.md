@@ -2,7 +2,7 @@
 * 본 프로젝트는 **API 콜 최적화**를 적용한 **검색어 조회 웹 사이트** 입니다.
 
 # 🚩 베포 주소
-[React_SearchApi](https://64297d1c7910a60008dcf006--statuesque-beijinho-50a311.netlify.app/)
+[React_SearchApi](https://statuesque-beijinho-50a311.netlify.app/)
 
 <br>
 
